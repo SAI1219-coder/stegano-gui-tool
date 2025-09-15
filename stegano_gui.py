@@ -96,18 +96,32 @@ def decode_message(image_path: str) -> str:
 # ---------- GUI ----------
 def select_image_for_encode():
     file_path = filedialog.askopenfilename(filetypes=[("PNG Images","*.png")])
-    if not file_path: return
+    if not file_path:
+        return
     msg = text_entry.get("1.0","end-1c")
     if not msg:
         messagebox.showerror("エラー", "メッセージを入力してください。")
         return
-    output_path = filedialog.asksaveasfilename(defaultextension=".png")
-    if not output_path: return
+
+    # 元ファイル名から「_encode.png」を生成
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
+    default_name = base_name + "_encode.png"
+
+    # 保存ダイアログを表示（デフォルト名をセット）
+    output_path = filedialog.asksaveasfilename(
+        defaultextension=".png",
+        initialfile=default_name,
+        filetypes=[("PNG Images","*.png")]
+    )
+    if not output_path:
+        return
+
     try:
         out = encode_message(file_path, output_path, msg)
-        messagebox.showinfo("完了", f"埋め込み完了！\n{out}")
+        messagebox.showinfo("完了", f"埋め込み完了！\n保存先: {out}")
     except Exception as e:
         messagebox.showerror("エラー", str(e))
+
 
 def select_image_for_decode():
     file_path = filedialog.askopenfilename(filetypes=[("PNG Images","*.png")])
@@ -122,8 +136,17 @@ root = tk.Tk()
 root.title("シンプル ステガノグラフィ ツール")
 
 tk.Label(root, text="埋め込みたいメッセージ:").pack()
-text_entry = tk.Text(root, height=5, width=50)
-text_entry.pack()
+
+frame = tk.Frame(root)
+frame.pack()
+
+text_entry = tk.Text(frame, height=5, width=50, wrap="word")
+text_entry.pack(side=tk.LEFT)
+
+scroll = tk.Scrollbar(frame, orient=tk.VERTICAL, command=text_entry.yview)
+scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+text_entry["yscrollcommand"] = scroll.set
 
 tk.Button(root, text="画像を選んで埋め込む", command=select_image_for_encode).pack(pady=5)
 tk.Button(root, text="画像から抽出する", command=select_image_for_decode).pack(pady=5)
